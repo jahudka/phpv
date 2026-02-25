@@ -1,10 +1,19 @@
+if [[ -z "${PHPV_LATEST_VERSION:+x}" ]]; then
+  echo "PHPv was not initialised in this shell, did you add"
+  echo "the initialisation command to your '~/.zprofile' or '~/.zshrc'?"
+  return 1
+fi
+
 if [[ "$#" -lt "1" ]]; then
-  echo 'Usage: phpv <default|latest|$version>'
+  echo 'Usage: phpv <version>'
+  echo ''
+  echo 'Available versions:'
+  ls "$( brew --cellar )" | grep '^php@' | cut -d@ -f2 | sort -rV | sed '1 s/$/ (alias: "latest")/;s/^/ - /g'
   return 1
 fi
 
 case "$1" in
-  default|latest)
+  latest)
     version="${PHPV_LATEST_VERSION}"
     ;;
   *)
