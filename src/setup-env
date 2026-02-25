@@ -1,0 +1,29 @@
+if [[ -z "${PHPV_INSTALL_PATH:+x}" ]]; then
+  export PHPV_INSTALL_PATH="$( dirname "${0:a:h}" )"
+fi
+
+if [[ -z "${PHPV_LATEST_VERSION:+x}" ]]; then
+  export PHPV_LATEST_VERSION="$( ls "$( brew --cellar )" | grep '^php@' | cut -d@ -f2 | sort -V | tail -1 )"
+fi
+
+if [[ -z "${PHPV_CURRENT_VERSION:+x}" ]]; then
+  export PHPV_CURRENT_VERSION="${PHPV_LATEST_VERSION}"
+fi
+
+export PATH="$( brew --prefix "php@${PHPV_CURRENT_VERSION}" )/bin:$( sed -E 's~(^|:)[^:]+/php@[0-9].[0-9]/bin:~\1~g' <<< "${PATH}" )"
+alias phpv='source "${PHPV_INSTALL_PATH}/src/switch-version"'
+
+if (( $@[(Ie)--with-chdir-hook] )); then
+    autoload -U add-zsh-hook
+
+    _phpv_autoload_hook () {
+      if [[ -f composer.json ]]; then
+        eval "$( "${PHPV_INSTALL_PATH}/src/check-dir" )"
+      fi
+    }
+
+    add-zsh-hook chpwd _phpv_autoload_hook
+    _phpv_autoload_hook
+
+    rehash
+fi

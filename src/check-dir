@@ -1,0 +1,36 @@
+#!/usr/bin/env zsh
+
+if [[ -z "${PHPV_INSTALL_PATH:+x}" ]]; then
+  export PHPV_INSTALL_PATH="$( dirname "${0:a:h}" )"
+fi
+
+exec php -- $( ls "$( brew --cellar )" | grep '^php@' | cut -d@ -f2 | sort -V ) <<'EOT'
+<?php
+
+$composerJson = @json_decode(file_get_contents('composer.json'), true);
+$requirement = isset($composerJson['require']['php']) ? $composerJson['require']['php'] : null;
+
+if ($requirement === null) {
+  exit;
+}
+
+require getenv('PHPV_INSTALL_PATH') . '/vendor/autoload.php';
+$versions = array_slice($_SERVER['argv'], 1);
+$currentVersion = getenv('PHPV_CURRENT_VERSION');
+
+foreach ($versions as $version) {
+  if (Composer\Semver\Semver::satisfies($version, $requirement)) {
+    if ($version === $currentVersion) {
+      exit;
+    }
+
+    printf('export PATH="$( brew --prefix "php@%s" )/bin:$( sed -E \'s~(^|:)[^:]+/php@[0-9].[0-9]/bin:~\1~g\' <<< "${PATH}" )"', $version);
+    echo "\n";
+    printf('export PHPV_CURRENT_VERSION="%s"', $version);
+    echo "\n echo 'Using PHP $version'\n";
+    exit;
+  }
+}
+
+echo "echo 'Warning: unable to switch to required PHP version $requirement' >&2";
+EOT
