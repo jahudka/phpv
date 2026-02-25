@@ -16,6 +16,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: src/go.mod
+          cache-dependency-path: src/go.sum
       - name: Build binary
         run: make
       - name: Build release archive

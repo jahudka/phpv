@@ -1,5 +1,5 @@
 check-dir: src/check-dir.go
-	go build -o check-dir src
+	go build -C src -o ../check-dir
 
 .PHONY: release
 release: check-dir
