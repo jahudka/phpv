@@ -6,7 +6,7 @@ on:
 jobs:
   deploy:
     name: deploy
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     permissions:
       contents: write
     steps:
