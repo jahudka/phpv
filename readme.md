@@ -21,12 +21,14 @@ with a required PHP version specified.
 
 ```shell
 # Change to suit your preference
-installDir="$HOME/.local/opt/phpv"
+installDir="$HOME/.local/opt"
 
 mkdir -p "${installDir}"
 cd "${installDir}"
-git clone git@github.com:jahudka/phpv.git .
-composer install
+wget https://github.com/jahudka/phpv/releases/latest/download/phpv.zip
+unzip phpv.zip
+rm -f phpv.zip
+
 
 # Install any PHP versions you need:
 brew install shivammathur/php/php@7.1 shivammathur/php/php@8.4
@@ -40,13 +42,13 @@ brew install shivammathur/php/php@7.1 shivammathur/php/php@8.4
 > override the global version when needed.
 
 Add PHPv initialization to your `~/.zprofile` or `~/.zshrc`.
-Don't forget to change `$HOME/.local/opt/phpv` to the same value
+Don't forget to change `$HOME/.local/opt` to the same value
 you used for `$installDir` above. The `--with-chdir-hook` argument
 enables automatic version switching when you `cd` into a directory
 containing a `composer.json` file.
 
 ```shell
-source "$HOME/.local/opt/phpv/src/setup-env" --with-chdir-hook
+source "$HOME/.local/opt/phpv/setup-env" --with-chdir-hook
 ```
 
 ## Usage

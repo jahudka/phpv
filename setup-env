@@ -1,0 +1,37 @@
+if [[ -z "${PHPV_INSTALL_PATH:+x}" ]]; then
+  export PHPV_INSTALL_PATH="${0:a:h}"
+fi
+
+if [[ -z "${PHPV_AVAILABLE_VERSIONS:+x}" ]]; then
+  export PHPV_AVAILABLE_VERSIONS="$( ls "$( brew --cellar )" | grep '^php@' | cut -d@ -f2 | sort -V )"
+fi
+
+if [[ -z "${PHPV_LATEST_VERSION:+x}" ]]; then
+  export PHPV_LATEST_VERSION="$( tail -1 <<< "${PHPV_AVAILABLE_VERSIONS}" )"
+fi
+
+if [[ -z "${PHPV_CURRENT_VERSION:+x}" ]]; then
+  export PHPV_CURRENT_VERSION="${PHPV_LATEST_VERSION}"
+fi
+
+if [[ -z "${PHPV_BREW_PREFIX:+x}" ]]; then
+  export PHPV_BREW_PREFIX="$( dirname "$( brew --prefix "php@${PHPV_CURRENT_VERSION}" )" )"
+fi
+
+export PATH="${PHPV_BREW_PREFIX}/php@${PHPV_CURRENT_VERSION}/bin:$( sed -E 's~(^|:)[^:]+/php@[0-9].[0-9]/bin:~\1~g' <<< "${PATH}" )"
+alias phpv='source "${PHPV_INSTALL_PATH}/switch-version"'
+
+if (( $@[(Ie)--with-chdir-hook] )); then
+    autoload -U add-zsh-hook
+
+    _phpv_autoload_hook () {
+      if [[ -f composer.json ]]; then
+        eval "$( "${PHPV_INSTALL_PATH}/check-dir" )"
+      fi
+    }
+
+    add-zsh-hook chpwd _phpv_autoload_hook
+    _phpv_autoload_hook
+
+    rehash
+fi

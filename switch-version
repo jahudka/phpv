@@ -8,22 +8,21 @@ if [[ "$#" -lt "1" ]]; then
   echo 'Usage: phpv <version>'
   echo ''
   echo 'Available versions:'
-  ls "$( brew --cellar )" | grep '^php@' | cut -d@ -f2 | sort -rV | sed '1 s/$/ (alias: "latest")/;s/^/ - /g'
+  sort -rV <<< "${PHPV_AVAILABLE_VERSIONS}" | sed '1 s/$/ (alias: "latest")/;s/^/ - /g'
   return 1
 fi
 
 case "$1" in
   latest)
-    version="${PHPV_LATEST_VERSION}"
+    export PHPV_CURRENT_VERSION="${PHPV_LATEST_VERSION}"
     ;;
   *)
-    version="$1"
+    export PHPV_CURRENT_VERSION="$1"
     ;;
 esac
 
-export PATH="$( brew --prefix "php@${version}" )/bin:$( sed -E 's~(^|:)[^:]+/php@[0-9].[0-9]/bin:~\1~g' <<< "${PATH}" )"
-export PHPV_CURRENT_VERSION="${version}"
+export PATH="${PHPV_BREW_PREFIX}/php@${PHPV_CURRENT_VERSION}/bin:$( sed -E 's~(^|:)[^:]+/php@[0-9].[0-9]/bin:~\1~g' <<< "${PATH}" )"
 
 if [[ "$2" != "--silent" ]]; then
-  php -v
+  echo "Using PHP ${PHPV_CURRENT_VERSION}"
 fi
