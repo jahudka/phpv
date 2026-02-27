@@ -21,7 +21,7 @@ case "$1" in
     ;;
 esac
 
-export PATH="${PHPV_BREW_PREFIX}/php@${PHPV_CURRENT_VERSION}/bin:$( sed -E 's~(^|:)[^:]+/php@[0-9].[0-9]/bin:~\1~g' <<< "${PATH}" )"
+export PATH="${PHPV_BREW_PREFIX}/php@${PHPV_CURRENT_VERSION}/bin:${PHPV_BREW_PREFIX}/php@${PHPV_CURRENT_VERSION}/sbin:$( sed -E 's~(^|:)[^:]+/php@[0-9].[0-9]/bin:~\1~g' <<< "${PATH}" )"
 
 if [[ "$2" != "--silent" ]]; then
   echo "Using PHP ${PHPV_CURRENT_VERSION}"

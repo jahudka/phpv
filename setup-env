@@ -18,16 +18,14 @@ if [[ -z "${PHPV_BREW_PREFIX:+x}" ]]; then
   export PHPV_BREW_PREFIX="$( dirname "$( brew --prefix "php@${PHPV_CURRENT_VERSION}" )" )"
 fi
 
-export PATH="${PHPV_BREW_PREFIX}/php@${PHPV_CURRENT_VERSION}/bin:$( sed -E 's~(^|:)[^:]+/php@[0-9].[0-9]/bin:~\1~g' <<< "${PATH}" )"
+source "${PHPV_INSTALL_PATH}/switch-version" latest --silent
 alias phpv='source "${PHPV_INSTALL_PATH}/switch-version"'
 
 if (( $@[(Ie)--with-chdir-hook] )); then
     autoload -U add-zsh-hook
 
     _phpv_autoload_hook () {
-      if [[ -f composer.json ]]; then
-        eval "$( "${PHPV_INSTALL_PATH}/check-dir" )"
-      fi
+      eval "$( "${PHPV_INSTALL_PATH}/check-dir" )"
     }
 
     add-zsh-hook chpwd _phpv_autoload_hook

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"os"
 
@@ -18,9 +19,12 @@ func main() {
         return
     }
 
-	versionStrings := strings.Split(strings.TrimSpace(os.Getenv("PHPV_AVAILABLE_VERSIONS")), "\n")
+	cwd, err := os.Getwd()
+	if err != nil {
+	    return
+	}
 
-	rangeStr := readPHPConstraint("composer.json")
+	rangeStr := resolveRequiredVersion(cwd)
 	if rangeStr == "" {
 		return
 	}
@@ -29,6 +33,9 @@ func main() {
 	if err != nil {
 		return
 	}
+
+    versionStrings := strings.Split(strings.TrimSpace(os.Getenv("PHPV_AVAILABLE_VERSIONS")), "\n")
+    currentVersionStr := os.Getenv("PHPV_CURRENT_VERSION")
 
 	for _, vs := range versionStrings {
 		v, err := semver.NewVersion(vs)
@@ -40,29 +47,34 @@ func main() {
 		    continue
 		}
 
-        origPaths := strings.Split(os.Getenv("PATH"), ":")
-        paths := origPaths[:0]
-        prefix := fmt.Sprintf("%s/php@", os.Getenv("PHPV_BREW_PREFIX"))
-
-        for _, path := range origPaths {
-            if !strings.HasPrefix(path, prefix) {
-                paths = append(paths, path)
-            }
+        if vs == currentVersionStr {
+            return
         }
 
-        fmt.Printf("export PHPV_CURRENT_VERSION=\"%s\"\n", v.Original())
-        fmt.Printf("export PATH=\"%s%s/bin:%s\"\n", prefix, v.Original(), strings.Join(paths, ":"))
-        fmt.Printf("echo 'Using PHP %s'\n", v.Original())
+        setActiveVersion(vs)
         return
 	}
 }
 
-func readPHPConstraint(path string) string {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return ""
-	}
+func resolveRequiredVersion(dir string) string {
+    for {
+        data, err := os.ReadFile(fmt.Sprintf("%s/composer.json", dir))
 
+        if err == nil {
+            return readComposerJson(data)
+        }
+
+        parent := filepath.Dir(dir)
+
+        if parent == dir {
+            return ""
+        }
+
+        dir = parent
+    }
+}
+
+func readComposerJson(data []byte) string {
 	var composer Composer
 	if err := json.Unmarshal(data, &composer); err != nil {
 		return ""
@@ -82,4 +94,20 @@ func readPHPConstraint(path string) string {
 	}
 
 	return rangeStr
+}
+
+func setActiveVersion(version string) {
+    prefix := fmt.Sprintf("%s/php@", os.Getenv("PHPV_BREW_PREFIX"))
+    origPaths := strings.Split(os.Getenv("PATH"), ":")
+    paths := origPaths[:0]
+
+    for _, path := range origPaths {
+        if !strings.HasPrefix(path, prefix) {
+            paths = append(paths, path)
+        }
+    }
+
+    fmt.Printf("export PHPV_CURRENT_VERSION=\"%s\"\n", version)
+    fmt.Printf("export PATH=\"%s%s/bin:%s%s/sbin:%s\"\n", prefix, version, prefix, version, strings.Join(paths, ":"))
+    fmt.Printf("echo 'Using PHP %s'\n", version)
 }
